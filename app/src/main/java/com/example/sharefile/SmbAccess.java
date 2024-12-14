@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -21,27 +22,20 @@ import jcifs.smb.SmbFileInputStream;
 
 public class SmbAccess {
 
-    public static List<SmbFile> accessSharedFolder(String smbUrl, String username, String password) {
+    public static List<SmbFile> accessSharedFolder(String smbUrl, String username, String password) throws Exception {
 
         List<SmbFile> list = new ArrayList<>();
 
-        try {
-
-            CIFSContext authContext = getCIFSContext(username, password);
-            // 访问共享文件夹
+        CIFSContext authContext = getCIFSContext(username, password);
+        // 访问共享文件夹
 //             smbUrl = "smb://192.168.31.99/SharedFolder/Signal/Android/Signal-latest";
-            System.out.println("smbUrl= " + smbUrl);
-            SmbFile smbFile = new SmbFile(smbUrl, authContext);
+        System.out.println("smbUrl= " + smbUrl);
+        SmbFile smbFile = new SmbFile(smbUrl, authContext);
 
-            // 列出文件
-            for (SmbFile file : smbFile.listFiles()) {
-                list.add(file);
-                System.out.println("File: " + file.getName());
-            }
-
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        // 列出文件
+        for (SmbFile file : smbFile.listFiles()) {
+            list.add(file);
+            System.out.println("File: " + file.getName());
         }
 
         return list;

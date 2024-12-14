@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -43,9 +44,7 @@ public class FilesActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         String path = intent.getStringExtra("path");
-//        getExternalFilesDir(null);
-        File file = new File(path);
-        parentFile = file.getParentFile();
+        parentFile = new File(path);
         files = parentFile.listFiles();
         adapter.setData(files);
         local.setText(files[0].getParentFile().getAbsolutePath());
@@ -70,6 +69,7 @@ public class FilesActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
             MyViewHolder2 myViewHolder2 = (MyViewHolder2) holder;
+            myViewHolder2.setPosition(position);
             File file = files.get(position);
             if (file.isFile()) {
                 myViewHolder2.icon_tv.setImageResource(R.mipmap.file);
@@ -109,12 +109,25 @@ public class FilesActivity extends AppCompatActivity {
             private final ImageView icon_tv;
             private final TextView filename_tv;
             private final TextView size_tv;
+            private int position;
 
             public MyViewHolder2(View view) {
                 super(view);
                 icon_tv = view.findViewById(R.id.icon);
                 filename_tv = view.findViewById(R.id.filename);
                 size_tv = view.findViewById(R.id.size);
+                view.setOnClickListener(v -> {
+                    File file = files.get(position);
+                    if (file.getName().endsWith(".apk")) {
+                        InstallApkUtils.installApk(v.getContext(), file);
+                    } else {
+                        Toast.makeText(v.getContext(), "抱歉,不支持打开该格式!!" + file.getName(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
+            public void setPosition(int position) {
+                this.position = position;
             }
         }
     }

@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.io.File;
 import java.net.URL;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.List;
 
 import jcifs.smb.SmbException;
@@ -27,18 +28,17 @@ import jcifs.smb.SmbFile;
 
 public class MainActivity extends AppCompatActivity {
 
+    private File externalCacheDir;
+
     private void openSubFile(final SmbFile smbFile) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                URL url = smbFile.getURL();
-                String subFile = url.getProtocol() + "://" + url.getAuthority() + url.getPath();
-                Intent intent = new Intent(context, MainActivity.class);
-                intent.putExtra("fileUrl", subFile);
-                intent.putExtra("username", username);
-                intent.putExtra("password", password);
-                context.startActivity(intent);
-            }
+        runOnUiThread(() -> {
+            URL url = smbFile.getURL();
+            String subFile = url.getProtocol() + "://" + url.getAuthority() + url.getPath();
+            Intent intent = new Intent(context, MainActivity.class);
+            intent.putExtra("fileUrl", subFile);
+            intent.putExtra("username", username);
+            intent.putExtra("password", password);
+            context.startActivity(intent);
         });
     }
 
@@ -56,6 +56,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         context = this;
         sp = getSharedPreferences("sp_filename", Context.MODE_PRIVATE);
+        externalCacheDir = getExternalCacheDir();
+        TextView files = findViewById(R.id.download_files);
+        String[] list = externalCacheDir.list();
+        files.setText("已下载文件: " + list.length);
 
         et_fileUrl = findViewById(R.id.url);
         et_username = findViewById(R.id.username);
@@ -104,21 +108,31 @@ public class MainActivity extends AppCompatActivity {
         fileUrl = et_fileUrl.getText().toString();
         username = et_username.getText().toString();
         password = et_password.getText().toString();
+        if (!fileUrl.endsWith("/")) {
+            Toast.makeText(context, "文件夹路径要以 '/' 结尾", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         sp.edit().putString("fileUrl", fileUrl).apply();
         sp.edit().putString("username", username).apply();
         sp.edit().putString("password", password).apply();
 
         new Thread(() -> {
-            final List<SmbFile> list = SmbAccess.accessSharedFolder(fileUrl, username, password);
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    adapter.setData(list);
-                }
-            });
+            List<SmbFile> list = new ArrayList<>();
+            try {
+                list = SmbAccess.accessSharedFolder(fileUrl, username, password);
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(() -> Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show());
+            }
+            List<SmbFile> finalList = list;
+            runOnUiThread(() -> adapter.setData(finalList));
         }).start();
 
+    }
+
+    public void openFiles(View view) {
+        FilesActivity.open(context, externalCacheDir.getAbsolutePath());
     }
 
     private class MyAdapter extends RecyclerView.Adapter {
@@ -135,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
             MyViewHolder myViewHolder = (MyViewHolder) holder;
             SmbFile smbFile = list.get(position);
             myViewHolder.setPosition(position);
-            myViewHolder.filename.setText(smbFile.getPath());
+            myViewHolder.filename.setText(smbFile.getName());
 
             new Thread(() -> {
                 try {
@@ -216,10 +230,11 @@ public class MainActivity extends AppCompatActivity {
             progressDialog.show();
         });
 
-        String temp = getExternalCacheDir() + "/" + "temp/";
+
+        String temp = externalCacheDir + "/" + "temp/";
         File file = new File(temp);
         if (!file.exists()) file.mkdirs();
-        String FINAL_FILE_NAME = getExternalCacheDir() + "/" + smbFile.getName();
+        String FINAL_FILE_NAME = externalCacheDir + "/" + smbFile.getName();
         URL url = smbFile.getURL();
         String smbUrl = url.getProtocol() + "://" + url.getAuthority() + url.getPath();
         System.out.println("downloadFile2 " + smbUrl);
@@ -227,8 +242,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void success(String msg) {
                 runOnUiThread(() -> {
-                    FilesActivity.open(context, FINAL_FILE_NAME);
-                    runOnUiThread(() -> progressDialog.dismiss());
+                    FilesActivity.open(context, externalCacheDir.getAbsolutePath());
+                    runOnUiThread(() -> {
+                        progressDialog.dismiss();
+                        Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
+                    });
                 });
             }
 
@@ -257,7 +275,7 @@ public class MainActivity extends AppCompatActivity {
 
         new Thread(() -> {
             System.out.println("File download start....!");
-            String localFilePath = getExternalCacheDir() + "/" + smbFile.getName();
+            String localFilePath = externalCacheDir + "/" + smbFile.getName();
             SmbAccess.downloadFile(smbFile, localFilePath, new SmbAccess.Callback() {
                 @Override
                 public void success() {

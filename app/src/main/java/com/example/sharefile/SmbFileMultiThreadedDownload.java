@@ -59,12 +59,12 @@ public class SmbFileMultiThreadedDownload {
             mergeFileParts(TEMP_DIR, FINAL_FILE_NAME, NUMBER_OF_THREADS);
             long currentTimeMillis2 = System.currentTimeMillis();
             long time = (currentTimeMillis2 - currentTimeMillis1) / 1000;
-            String msg = "===============下载完成 用时: " + time + "s" + "  平均: " + fileSize * 1.0f / 1024 / 1024 / time + "M/s";
+            String msg = "=====下载完成 用时: " + time + "s" + "  平均: " + fileSize * 1.0f / 1024 / 1024 / time + "M/s";
             callback.success(msg);
             System.out.println(msg);
         } catch (Exception e) {
-            String msg = "===============下载失败";
-            callback.success(msg);
+            String msg = "=====下载失败";
+            callback.fail(e.getMessage());
             System.out.println(msg);
             e.printStackTrace();
         } finally {
