@@ -19,7 +19,7 @@ public class IPComparator {
     public static boolean areInSameSubnet(String ip1, String subnetMask, String ip2) throws UnknownHostException {
         int ip1Int = ipToInt(ip1);
         int ip2Int = ipToInt(ip2);
-        int maskInt = ipToInt(subnetMask.replace(".", "255.")); // 将子网掩码转换为整数，例如"255.255.255.0"
+        int maskInt = ipToInt(subnetMask); // 将子网掩码转换为整数，例如"255.255.255.0"
 
         // 获取网络地址
         int network1 = ip1Int & maskInt;
@@ -33,10 +33,10 @@ public class IPComparator {
         try {
             //String ip1 = "192.168.1.10";
             String subnetMask = NetworkUtilsHelper.getSubnetMask(context);
-            String ipAddress = NetworkUtilsHelper.getLocalIpAddress(context);
+            String ip2 = NetworkUtilsHelper.getLocalIpAddress(context);
 
-            boolean sameSubnet = areInSameSubnet(ip1, subnetMask, ipAddress);
-            System.out.println("Are " + ip1 + " and " + ipAddress + " in the same subnet? " + sameSubnet);
+            System.out.println("ip1: " + ip1 + " ip2: " + ip2 + " subnetMask: " +subnetMask);
+            boolean sameSubnet = areInSameSubnet(ip1, subnetMask, ip2);
             return sameSubnet;
         } catch (UnknownHostException e) {
             e.printStackTrace();

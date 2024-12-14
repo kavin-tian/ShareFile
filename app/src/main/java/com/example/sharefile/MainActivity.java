@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText et_password;
     private String fileUrl;
     private String username;
-    private  String password;
+    private String password;
     private RecyclerView recyclerView;
     private MyAdapter adapter;
     private Context context;
@@ -310,11 +310,11 @@ public class MainActivity extends AppCompatActivity {
     private void areInSameSubnet() {
         new Thread(() -> {
             try {
-                Uri uri = Uri.parse(fileUrl);
-                String host = uri.getHost();
+                String host =  Uri.parse(fileUrl).getHost();
                 boolean areInSameSubnet = IPComparator.areInSameSubnet2(context, host);
+                String ipAddress = NetworkUtilsHelper.getLocalIpAddress(context);
                 if (!areInSameSubnet) {
-                    runOnUiThread(() -> Toast.makeText(context, "不在同一子网", Toast.LENGTH_LONG).show());
+                    runOnUiThread(() -> Toast.makeText(context, "不在同一子网\n当前手机ip为:" + ipAddress, Toast.LENGTH_LONG).show());
                 }
             } catch (Exception e) {
                 e.printStackTrace();
