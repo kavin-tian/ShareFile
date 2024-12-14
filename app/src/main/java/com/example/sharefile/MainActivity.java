@@ -3,6 +3,7 @@ package com.example.sharefile;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -45,6 +46,9 @@ public class MainActivity extends AppCompatActivity {
     private EditText et_fileUrl;
     private EditText et_username;
     private EditText et_password;
+    private String fileUrl;
+    private String username;
+    private  String password;
     private RecyclerView recyclerView;
     private MyAdapter adapter;
     private Context context;
@@ -97,12 +101,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-
     }
-
-    String fileUrl;
-    String username;
-    String password;
 
     public void onClick(View view) {
         fileUrl = et_fileUrl.getText().toString();
@@ -112,11 +111,9 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(context, "文件夹路径要以 '/' 结尾", Toast.LENGTH_SHORT).show();
             return;
         }
-
         sp.edit().putString("fileUrl", fileUrl).apply();
         sp.edit().putString("username", username).apply();
         sp.edit().putString("password", password).apply();
-
         new Thread(() -> {
             List<SmbFile> list = new ArrayList<>();
             try {
@@ -129,7 +126,9 @@ public class MainActivity extends AppCompatActivity {
             runOnUiThread(() -> adapter.setData(finalList));
         }).start();
 
+        areInSameSubnet();
     }
+
 
     public void openFiles(View view) {
         FilesActivity.open(context, externalCacheDir.getAbsolutePath());
@@ -307,5 +306,20 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+
+    private void areInSameSubnet() {
+        new Thread(() -> {
+            try {
+                Uri uri = Uri.parse(fileUrl);
+                String host = uri.getHost();
+                boolean areInSameSubnet = IPComparator.areInSameSubnet2(context, host);
+                if (!areInSameSubnet) {
+                    runOnUiThread(() -> Toast.makeText(context, "不在同一子网", Toast.LENGTH_LONG).show());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
 
 }
